@@ -1,2 +1,2 @@
 # logML
-Log analysis
+logML try to find anomaly into log event
