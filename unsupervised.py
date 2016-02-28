@@ -20,9 +20,6 @@ class kmeans:
 	def __init__(self,k=2,n=100):
 		self.k = k
 		self.n_step = n
-	def random_centroid(self,data,k):
-		# generate random centroid for the 1st step
-		return random.sample(data,k)
 	def clusters_(self,data,indices):
 		clusters = {}
 		for key in indices:
@@ -37,10 +34,9 @@ class kmeans:
 	
 	def fit(self,data):
 		# from https://en.wikipedia.org/wiki/K-means_clustering
-		cl = kmeans(k=self.k,n=self.n_step)
-		k = cl.k
-		n_step = cl.n_step
-		centroids = cl.random_centroid(data,k)
+		k = self.k
+		n_step = self.n_step
+		centroids = random.sample(data,k)
 		counter_ = 0
 		indices_c = {}
 		while counter_ < n_step:
