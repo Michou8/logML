@@ -11,6 +11,9 @@ class events:
 		m = Months.keys()
 		month = m[randint(0,len(m)-1)]
 		return month+' '+str(randint(0,Months[month])+1) 
+	def time(self):
+		r = randint
+		return str(r(0,23))+':'+str(r(0,60))+':'+str(r(0,60))
 	def ip(self):
 		r = randint
 		return str(r(1,255)) +'.'+str(r(0,255))+'.'+str(r(0,255))+'.'+str(r(0,255)) 
@@ -33,11 +36,9 @@ class events:
 		log_event = []
 		for i in xrange(self.number):
 			e = events()
-			tmp = {'Date':e.date(),'ip_adress':e.ip(),'action':e.action(),'code':e.code(),'device':e.device(),'user_agent':e.user_agent(),'response_time':e.response_time(),'response_size':e.response_size()}
+			tmp = {'date':e.date(),'time':e.time(),'ip_adress':e.ip(),'action':e.action(),'code':e.code(),'device':e.device(),'user_agent':e.user_agent(),'response_time':e.response_time(),'response_size':e.response_size()}
 			log_event.append(tmp)
 		return log_event
 	def write_log(self):
 		with open(self.filename,'wb') as f:
 			json.dump(events(self.number).evts(),f,indent=4)
-event = events(number=50).write_log()
-print event
