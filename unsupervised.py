@@ -62,34 +62,7 @@ class kmeans:
 			clusters,centroids = cl.clusters_(data,indices_c)
 					
 		return clusters,centroids
-def eps_near(eps,data,i):
-                res = []
-                for j in xrange(len(data)):
-                        if j!=i and distance(data[i],data[j])<=eps:
-                                res.append(j)
-                return res
-def extend_cluster(eps,minpts,data,P,c_clusters,clusters_):
-                eps_near_ = eps_near(eps,data,P)
-                if c_clusters not in clusters_:
-                        clusters_[c_clusters] = []
-                clusters_[c_clusters].append(P)
-                visited = []
-                for p_ in eps_near_:
-                        if p_ not in visited:
-                                visited.append(p_)
-                                p_eps_near_ = eps_near(eps,data,p_)
-                                if len(p_eps_near) >= minpts:
-                                        eps_near_ = eps_near_ + p_eps_near_
-                                size = len(clusters_)
-                                counter = 0
-                                for i in xrange(size):
-                                        if p_ not in clusters_:
-                                                counter += 1
-                                        else:
-                                                break
-                                if counter == size:
-                                        self.clusters[c_clusters].append(p_)
-                return self.clusters
+########### DBSCAN	
 class dbscan:
 	#https://fr.wikipedia.org/wiki/DBSCAN
 	def __init__(self,eps=10,minpts=10):
@@ -104,48 +77,158 @@ class dbscan:
 				res.append(j)
 		return res
 	"""
-	def extend_cluster(self,data,P,c_clusters):
+	def fit(self,data):
+		visited = ['UNCLASSIFIED']*len(data)
+		def union(U,V):
+			res = []
+			for i in U:
+				if i not in V:
+					res.append(i)
+			for i in V:
+				if i not in res:
+					res.append(i)
+			return res
+		def clustered(clusters,P):
+			for key in clusters:
+				if P in clusters[key]:
+					return True
+			return False
+		def eps_near(data,P,eps):
+			res = []
+			for i in xrange(len(data)):
+				if P!=i and distance(data[i],data[P])<=eps:
+                                	res.append(i)		
+			return res
+		def extend_cluster(data,P,neigbours,c_cluster,eps,minpts):
+			if c_cluster not in self.clusters:
+				self.clusters[c_cluster] = [P]
+			else:
+				self.clusters[c_cluster].append(P)
+			for P_prime in neigbours:
+				if visited[P_prime]!='VISIT':
+					visited[P_prime] = 'VISIT'
+					P_prrime_n = eps_near(data,P_prime,eps)
+					if len(P_prrime_n) > minpts:
+						neigbours = union(P_prrime_n,neigbours)
+				if not clustered(self.clusters,P_prime):
+					self.clusters[c_cluster].append(P_prime)
+		c_clusters = 0
 		eps = self.eps
 		minpts = self.minpts
-		eps_near_ = eps_near(eps,data,P)
-		if c_clusters not in self.clusters:
-			self.clusters[c_clusters] = []
-		self.clusters[c_clusters].append(P)
-		visited = []
-		for p_ in eps_near_:
-			if p_ not in visited:
-				visited.append(p_)
-				p_eps_near_ = eps_near(eps,data,p_)
-				if len(p_eps_near) >= minpts:
-					eps_near_ = eps_near_ + p_eps_near_
-				size = len(self.clusters)
-				counter = 0
-				for i in xrange(size):
-					if p_ not in self.clusters:
-						counter += 1
-					else:
-						break
-				if counter == size:
-					self.clusters[c_clusters].append(p_)		
-		return self.clusters
-	def fit(self,data):
-		c_clusters = 0
-		visited = []
 		cluster = {}
-		result = ['UNCLASSIFIED']*len(data)
-		for i in xrange(len(data)):
-			if i not in visited:
-				visited.append(i)
-				eps_near_ = eps_near(self.eps,data,i)
-				if len(eps_near_)< self.minpts:
-					result[i] = 'NOISE'
+		for P in xrange(len(data)):
+			print visited
+			if visited[P]!='VISIT':
+				visited[P] = 'VISIT'
+				eps_near_ = eps_near(data,P,eps)
+				if len(eps_near_)< minpts:
+					self.clusters['NOISE'].append(P)
 				else:
-					c_luster += 1
-					cluster = dbscan().extend_cluser(data,i,eps_near_)
-		return cluster
-				
-db= dbscan()
-data = [[1,0],[1,1],[1,23],[2,1.2],[1,25]]
+					c_clusters += 1
+
+					extend_cluster(data,P,eps_near_,c_clusters,eps,minpts)
+		return self.clusters
+###################### OPTICS
+class optics:
+	def __init__(self,eps,minpts,cluster_threshold = 50):
+                self.eps = eps
+                self.minpts = minpts
+		self.cluster_threshold = cluster_threshold
+	def fit(self,data):
+		eps = self.eps
+		minpts = self.minpts
+		ordered = []
+		visited = ['UNCLASSIFIED']*len(data)
+		def n_eps(eps,P,data):
+			res = []
+			for i in xrange(len(data)):
+				if distance(data[P],data[i])<=eps:
+					res.append(i)
+			return res
+		def core_distance(eps,minpts,P,data):
+			n_eps_ = n_eps(eps,P,data)
+			d_min_pts_dist = eps
+			if len(n_eps_)< minpts:
+				return None
+			else:
+				for i in n_eps_:
+					d = distance(data[i],data[P])
+					if d < d_min_pts_dist:
+						d_min_pts_dist = d
+				return d_min_pts_dist
+		def reachability_distance(data,eps,minpts,O,P):
+			n_eps_ = n_eps(eps,P,data)
+                        d_min_pts_dist = eps
+                        if len(n_eps_)< minpts:
+                                return None
+			else:
+				return max(core_distance(eps,minpts,P,data),distance(data[P],data[O]))
+		def update(N,p,seeds,eps,minpts,data,reach):
+			coredist = core_distance(eps,minpts,p,data)
+			for o in N:
+				#print seeds
+				#print reach
+				if visited[o]=='UNCLASSIFIED':
+					new_reach_dist = max(coredist,distance(data[o],data[p]))
+					if o not in seeds:
+						seeds[o] = None
+					if reach[o] == None:
+						reach[o] = new_reach_dist
+						seeds[o] = new_reach_dist
+					else:
+						if new_reach_dist < reach[o]:
+							reach[o] = new_reach_dist
+							#seeds.pop(o)
+							seeds[o] = new_reach_dist
+			x = seeds
+			return sorted(x.items(), key=operator.itemgetter(1))
+		reach = {}
+		for p in xrange(len(data)):
+			reach[p] = None
+		#print reach
+		for p in xrange(len(data)):
+			if visited[p] != 'VISIT':
+				N = n_eps(eps,p,data)
+				visited[p] = 'VISIT'
+				ordered.append(p)
+				if core_distance(eps,minpts,p,data) != None :
+					seeds = {}#[None]*len(data)
+					update(N,p,seeds,eps,minpts,data,reach)
+					import operator
+					x = seeds
+					sorted_x = sorted(x.items(), key=operator.itemgetter(1))
+					# remember sort seeds
+					for d in xrange(len(sorted_x)):
+						q = sorted_x[d][0]
+						if visited[q] != 'VISIT':
+							ordered.append(q)
+							N_prime = n_eps(eps,q,data)
+							visited[q] = 'VISIT'
+							if core_distance(eps,minpts,q,data) != None:
+								update(N,q,seeds,eps,minpts,data,reach)
+		#def cluster(self,cluster_threshold,reach):
+		separators = []
+		clusters = {}
+		cluster_threshold = self.cluster_threshold
+		c = 0
+		for i in xrange(len(ordered)):
+			pt = i
+			reach_d = reach[ordered[i]] if reach[ordered[i]] else float('infinity')
+			if reach_d > cluster_threshold:
+				separators.append(pt)
+		separators.append(len(ordered))
+		for i in xrange(len(separators)-1):
+			start = separators[i]
+			end = separators[i+1]
+			if end - start >=  self.minpts:
+				c+= 1
+				clusters[c] = []
+				for d in ordered[start:end]:
+					clusters[c].append(d)
+		print ordered			
+		return clusters
+db= optics(eps=100,minpts=2,cluster_threshold = 1)
+data = [[0,0],[1,1],[1,23],[2,1.2],[1,25],[1,1],[1,1.01]]
 print db.fit(data = data)
 #print len(data)
 #print k.fit(data)
