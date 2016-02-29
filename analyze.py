@@ -48,8 +48,9 @@ def encoder_one(events,meta_not_used = ['date','time','response_size','response_
 
 ####################################################
 
-events = randomevent.events(number=10000).evts()
+"""events = randomevent.events(number=10000).evts()
 data,encoder_ = encoder_one(events) 
-km = unsupervised.kmeans(k=3,n=10)
-print km.fit(data)
+km = unsupervised.(k=3,n=10)
+km.fit(data)
 #print encoder_
+"""

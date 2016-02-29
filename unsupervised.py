@@ -60,7 +60,7 @@ class kmeans:
 								k_tmp += 1
 					if k_tmp == k-1:
 						indices_c[i].append(j)
-			clusters,centroids = cl.clusters_(data,indices_c)
+			clusters,centroids = self.clusters_(data,indices_c)
 					
 		return clusters,centroids
 ########### DBSCAN	
@@ -118,7 +118,7 @@ class dbscan:
 		minpts = self.minpts
 		cluster = {}
 		for P in xrange(len(data)):
-			print visited
+			#print visited
 			if visited[P]!='VISIT':
 				visited[P] = 'VISIT'
 				eps_near_ = eps_near(data,P,eps)
