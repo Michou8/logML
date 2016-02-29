@@ -23,10 +23,33 @@ def encoder(events,meta_not_used = ['date','time','response_size','response_time
 				tmp.append(encoder_[key][e[key]])
 		transform.append(tmp)	
 	return transform,encoder_
+def encoder_one(events,meta_not_used = ['date','time','response_size','response_time','ip_adress']):
+	encoder_ = {}
+	for e in events:
+                for key in e:
+                        if key not in meta_not_used:
+				t = key+'_'+e[key]
+				if t not in encoder_:
+                                        encoder_[t] = 1
+                                else:
+					encoder_[t] += 1
+	keys = encoder_.keys()
+	tranform = []
+	for e in events:
+		tmp = []
+		for k in xrange(len(keys)):
+			spl = keys[k].split('_')
+			if spl[0] in e and spl[1] in e.values():
+				tmp.append(1)
+			else:
+				tmp.append(0)
+		tranform.append(tmp)
+	return tranform,keys
+
 ####################################################
 
 events = randomevent.events(number=10000).evts()
-data,encoder_ = encoder(events) 
+data,encoder_ = encoder_one(events) 
 km = unsupervised.kmeans(k=3,n=10)
 print km.fit(data)
 #print encoder_

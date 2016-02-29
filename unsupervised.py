@@ -2,6 +2,7 @@ import math
 # Not necessary in future but recommand
 import numpy as np
 import random
+import operator
 #######################################
 def distance(p,q,l=2):
 	res = 0.0
@@ -165,6 +166,7 @@ class optics:
 				return max(core_distance(eps,minpts,P,data),distance(data[P],data[O]))
 		def update(N,p,seeds,eps,minpts,data,reach):
 			coredist = core_distance(eps,minpts,p,data)
+			import operator
 			for o in N:
 				#print seeds
 				#print reach
