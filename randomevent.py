@@ -11,6 +11,7 @@ class events:
 		m = Months.keys()
 		month = m[randint(0,len(m)-1)]
 		return month+' '+str(randint(0,Months[month])+1) 
+		#return 'Jan 31'
 	def time(self):
 		r = randint
 		return str(r(0,23))+':'+str(r(0,60))+':'+str(r(0,60))
