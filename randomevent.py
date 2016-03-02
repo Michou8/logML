@@ -70,7 +70,7 @@ class events:
 								if months[j]==M:
 									i = j
 							i = i + 1
-							if i> len(months):
+							if i >= len(months):
 								i = 0
 							M = months[i]
                         log_event.append(tmp)

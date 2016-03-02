@@ -103,7 +103,7 @@ def create_force(result,clusters):
 		
 ####################################################
 
-events = randomevent.events(number=1000).evts(M='Jan',d=31,h=23,m=59,s=58)
+events = randomevent.events(number=1000).evts(M='Dec',d=31,h=23,m=59,s=58)
 data,_ = grouped_per_event(events,tronc='m')
 #print events[:10]
 #raw_input()
