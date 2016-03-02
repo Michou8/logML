@@ -12,3 +12,5 @@ OPTICS:
 	https://fr.wikipedia.org/wiki/OPTICS
 # TO-DO:
 ========
+
+	- Add connector for Elasticsearch (database)
