@@ -99,13 +99,15 @@ def grouped_per_event(events,tronc='h',meta_not_used = ['date','time','response_
 def create_force(result,clusters):
 	nodes = {"nodes":[]}
 	links = {"links":[]}
-	for key in result:
+	#for key in result:
 		
 ####################################################
 
-events = randomevent.events(number=1000).evts()
-data = grouped_per_event(events)
+events = randomevent.events(number=1000).evts(M='Jan',d=31,h=23,m=59,s=58)
+data,_ = grouped_per_event(events,tronc='m')
+#print events[:10]
+#raw_input()
 #data,encoder_ = encoder_one(events) 
-km = unsupervised.kmeans(k=2,n=20)
-clusters,centroids = km.fit(data)
-#print encoder_
+km = unsupervised.dbscan(eps=10,minpts=3)
+clusters = km.fit(data)
+print clusters
