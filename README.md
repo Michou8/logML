@@ -14,3 +14,5 @@ OPTICS:
 ========
 
 	- Add connector for Elasticsearch (database)
+	- Add dimension reduction (for sigma.js)
+	- Add sigma.js

@@ -218,21 +218,61 @@ def bigram(event,used = ['date','time','response_size','response_time','ip_adres
 			tmp = '_'
 		result.append(tmp)
 	return result
-		
+def create_json(data,localization,tf_date,clusters):
+	all_json = {'nodes':[],'links':[]}
+	def mean_(set_of_data):
+		tmp = [0]*len(set_of_data[0])
+		for event in set_of_data:
+			for i in xrange(len(event)):
+				tmp[i] += event[i]
+		for i in xrange(len(tmp)):
+			tmp[i] = tmp[i]/len(set_of_data)
+		return tmp
+	def getData(data,indices):
+		result = []
+		for i in indices:
+			result.append(data[i])
+		return result
+	def dictance(p,q):
+		res = 0.0
+		for i in xrange(len(p)):
+			tmp = p[i]-q[i]
+			res += tmp**2
+		return math.sqrt(res)
+	id = 0
+	cl = 0
+	for cluster in clusters:
+		centroids = mean_(getData(data,clusters[cluster]))
+		centroids_id = id
+		all_json['nodes'].append({"name":'Cluster_'+str(centroids_id),"group":cluster})
+		for i in clusters[cluster]:
+			value = dictance(data[i],centroids)
+			print value
+			# TO-DO add distance between centroids and data in cluster --> done
+			all_json['nodes'].append({"name":str(tf_date[localization[i]]),"group":cluster})
+			#{"source":19,"target":17,"value":4}
+			id += 1
+			all_json['links'].append({"source":id,"target":centroids_id,"value":1})
+		id += 1
+	with open("example/miserables.json",'wb') as f:
+		json.dump(all_json,f,indent=4)
+			
 ####################################################
 event = {"date":'r','time':'utioerutio'}
 print bigram(event,used = ['date','time','response_size','response_time','ip_adress','user_agent'])
 raw_input()
-events = randomevent.events(number=10000).evts(M='Dec',d=31,h=23,m=59,s=58)
-per_date_tfidf,df,data,encoder_,localization,tf_date = tfidf_per_time(events,tronc='h')
+events = randomevent.events(number=60*100).evts(M='Dec',d=31,h=23,m=59,s=58)
+per_date_tfidf,df,data,encoder_,localization,tf_date = tfidf_per_time(events,tronc='m')
 #raw_input()
 #data,_ = grouped_per_event(events,tronc='m')
 
 #print events[:10]
 #raw_input()
 #data,encoder_ = encoder_one(events) 
-km = unsupervised.dbscan(eps=2,minpts=3)
+km = unsupervised.optics(eps=0.1,minpts=5)
 clusters = km.fit(data)
+
+create_json(data,localization,tf_date,clusters)
 for k in  clusters['NOISE']:
 	print localization[k]
 	print tf_date[localization[k]]
