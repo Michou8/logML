@@ -24,6 +24,13 @@ def encoder(events,meta_not_used = ['date','time','response_size','response_time
 		transform.append(tmp)	
 	return transform,encoder_
 def encoder_one(events,meta_not_used = ['date','time','response_size','response_time','ip_adress']):
+	"""condider every log like a vector
+		inputs:
+		------
+			events : set of data log
+			meta_not_used : meta not used for vectorization e.g : it will be unique each event (not relevant)
+
+	"""
 	encoder_ = {}
 	for e in events:
                 for key in e:
@@ -46,6 +53,12 @@ def encoder_one(events,meta_not_used = ['date','time','response_size','response_
 		tranform.append(tmp)
 	return tranform,keys
 def time_tronc(time,tronc='h'):
+	"""give the troncated time
+		input:
+		-----
+			time : XX:XX:XX (24h) 
+			tronc : h = hour , m = minutes , s = secondes
+	"""
 	# h : hour
 	# m : minutes
 	# s : secondes
@@ -57,12 +70,17 @@ def time_tronc(time,tronc='h'):
 		ti[i] = spl[i]
 	return ':'.join([t for t in ti])
 def grouped_per_event(events,tronc='h',meta_not_used = ['date','time','response_size','response_time','ip_adress','user_agent']):
+	"""grouped and vectorized event per tronc
+		example: grouped each hour
+		input:
+		-----
+			events: set of data log
+			tronc : h = hour , m = minutes , s = secondes
+			meta_not_used : meta not used for vectorization e.g : it will be unique each event (not relevant)
+	"""
 	encoder_ = []
 	per_date = {}
 	for e in events:
-		#print e
-		#event = '_'.join([str(w)+':'+str(e[w]) for w in e if w not in meta_not_used])
-		#print event
 		tmp = {}
 		for key in e:
 			if key not in meta_not_used:
@@ -97,11 +115,20 @@ def grouped_per_event(events,tronc='h',meta_not_used = ['date','time','response_
 			i += 1
 	return result,date
 def tfidf_per_time(events,tronc='h',meta_not_used = ['date','time','response_size','response_time','ip_adress','user_agent']):
+	""" gives tfidf vectorization per tronc
+		input:
+                -----
+                        events: set of data log
+                        tronc : h = hour , m = minutes , s = secondes
+                        meta_not_used : meta not used for vectorization e.g : it will be unique each event (not relevant)
+	"""
 	df_tot = 0.0
 	encoder_ = []
 	tf_tot = 0.0
 	df = {}
 	def tfidf(table_event,tf_tot=tf_tot,df=df):
+		"""simple tf descriptor
+		"""
 		tf = {}
 		for e in table_event:
 			for key in e:
@@ -119,6 +146,7 @@ def tfidf_per_time(events,tronc='h',meta_not_used = ['date','time','response_siz
 			else:
 				df[key] += 1
 		return tf,tf_tot,df
+	# filtered data by date_time. e.g : Jan 1 10:10:00
 	per_date = {}
 	for e in events:
 		date_time = e['date']+'_'+ time_tronc(e['time'],tronc=tronc)
@@ -126,25 +154,28 @@ def tfidf_per_time(events,tronc='h',meta_not_used = ['date','time','response_siz
 			per_date[date_time] = [e]
 		else:
 			per_date[date_time].append(e)
+	#Calculated the tf for each date_time
 	per_date_tfidf = {}
+	#tf_date = all tf per date
 	tf_date = {}
 	for key in per_date:
 		tfidf_,tf_tot,df = tfidf(per_date[key],tf_tot=tf_tot,df=df)
 		tf_date[key] = tfidf_
 		per_date_tfidf[key] = tfidf_
-	#print tf_tot
-	#print df_tot
 	df_tot = len(per_date_tfidf)
+	
+	#Calculated tfidf for each date
 	for date in per_date_tfidf:
 		tmp = {}
 		for key in per_date_tfidf[date]:
 			tf_key = per_date_tfidf[date][key]
 			tmp[key] = (tf_key/tf_tot)*math.log((df_tot/df[key])+1)
 		per_date_tfidf[date] = tmp
-	#print per_date_tfidf
+
 	data = []
 	localization = {}
 	c = 0
+	#vectorized each date 
 	for date in per_date_tfidf:
 		tmp = [-1]*len(encoder_)
 		for k in xrange(len(encoder_)):
@@ -177,6 +208,8 @@ def tfidf_(result,meta_not_used = ['date','time','response_size','response_time'
 					df[key] += 1
 	return tf,df
 def bigram(event,used = ['date','time','response_size','response_time','ip_adress','user_agent']):
+	""" give bigram of dict by used ordered
+	"""
 	result = []
 	for i in xrange(len(used)-1):
 		if used[i] in event and used[i+1] in event:
