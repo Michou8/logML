@@ -218,6 +218,8 @@ def bigram(event,used = ['date','time','response_size','response_time','ip_adres
 			tmp = '_'
 		result.append(tmp)
 	return result
+
+
 def create_json(data,localization,tf_date,clusters):
 	all_json = {'nodes':[],'links':[]}
 	def mean_(set_of_data):
@@ -259,9 +261,11 @@ def create_json(data,localization,tf_date,clusters):
 			
 ####################################################
 event = {"date":'r','time':'utioerutio'}
-print bigram(event,used = ['date','time','response_size','response_time','ip_adress','user_agent'])
-raw_input()
+#print bigram(event,used = ['date','time','response_size','response_time','ip_adress','user_agent'])
+#raw_input()
 events = randomevent.events(number=60*100).evts(M='Dec',d=31,h=23,m=59,s=58)
+print events[0]
+raw_input()
 per_date_tfidf,df,data,encoder_,localization,tf_date = tfidf_per_time(events,tronc='m')
 #raw_input()
 #data,_ = grouped_per_event(events,tronc='m')
