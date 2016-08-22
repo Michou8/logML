@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
 
+import json
+
 
 def Vectorizer(events):
 	ct = CountVectorizer()
@@ -59,12 +61,12 @@ def datasplit(events,fields = ['action','code','device','user_agent'],tronc='h',
 events = randomevent.events(number=60*100+20).evts(M='Dec',d=31,h=23,m=59,s=58)
 #['action', 'code', 'device', 'ip_adress', 'response_size', 'time', 'date', 'response_time', 'user_agent']
 
-v = datasplit(events,tronc='h').values()
+v = datasplit(events,tronc='m').values()
 X =  Vectorizer(v)
 
 X = StandardScaler().fit_transform(X)
 
-kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=100)
+kpca = KernelPCA(kernel="rbf", fit_inverse_transform=True, gamma=1)
 X_kpca = kpca.fit_transform(X)
 X_back = kpca.inverse_transform(X_kpca)
 pca = PCA()
@@ -73,8 +75,8 @@ X_pca = pca.fit_transform(X)
 model = TSNE(n_components=2, random_state=0)
 X_tsne = model.fit_transform(X)
 
-X_pca = StandardScaler().fit_transform(X_kpca)
-db = DBSCAN(eps=0.52, min_samples=20).fit(X_pca)
+X_pca = StandardScaler().fit_transform(X_pca)
+db = DBSCAN(eps=5, min_samples=10).fit(X_pca)
 X = X_pca
 core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
 core_samples_mask[db.core_sample_indices_] = True
@@ -87,6 +89,29 @@ n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 # Plot results
 unique_labels = set(labels)
 colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+
+import random
+from matplotlib.colors import hex2color, rgb2hex
+def colored(labels):
+	ucolors = {}
+	for c in labels:
+		if c != -1:
+			
+			#ucolors[c] = 'rgb(%s,%s,%s)'%(random.randint(0,255),random.randint(0,255),random.randint(0,255))
+			ucolors[c] = rgb2hex((random.randint(0,255)/255.0,random.randint(0,255)/255.0,random.randint(0,255)/255.0))
+		else:
+			ucolors[c] = rgb2hex((0.0,0.0,0.0))
+	return ucolors
+def to_json(X,labels):
+	ucolor = colored(set(labels))
+	d = {'nodes':[],'edges':[]}
+	i = 0
+	for data in X:
+		d['nodes'].append({"id":i,"label":"LOGO","x":data[0],"y":data[1],'size':1,'color':ucolor[labels[i]]})
+		i += 1
+	with open('example/data.json','wb') as f:
+		json.dump(d,f)
+to_json(X,labels)
 for k, col in zip(unique_labels, colors):
     if k == -1:
         # Black used for noise.
